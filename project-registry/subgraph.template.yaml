@@ -6,13 +6,13 @@ features:
   - ipfsOnEthereumContracts
   - nonDeterministicIpfs
 dataSources:
-  # ProjectRegistry
+  # Registry
   - kind: ethereum/contract
-    name: ProjectRegistry
+    name: Registry
     network: {{ network }}
     source:
-      address: "{{ projectRegistryAddress }}"
-      abi: ProjectRegistry
+      address: "{{ registryAddress }}"
+      abi: Registry
       startBlock: {{ startBlock }}
     mapping:
       kind: ethereum/events
@@ -23,15 +23,13 @@ dataSources:
         - Account
         - AccountProject
       abis:
-        - name: ProjectRegistry
-          file: ./abis/ProjectRegistry.json
+        - name: Registry
+          file: ./abis/Registry.json
       eventHandlers:
-        - event: ProjectCreated(indexed uint256,indexed address)
-          handler: handleProjectCreated
-        - event: MetadataUpdated(indexed uint256,(uint256,string))
+        - event: MetadataUpdated(indexed bytes32,(uint256,string),uint8)
           handler: handleMetadataUpdated
-        - event: OwnerAdded(indexed uint256,indexed address)
+        - event: RoleGranted(indexed bytes32,indexed address,indexed address)
           handler: handleOwnerAdded
-        - event: OwnerRemoved(indexed uint256,indexed address)
+        - event: RoleRevoked(indexed bytes32,indexed address,indexed address)
           handler: handleOwnerRemoved
-      file: ./src/projectregistry/implementation.ts
+      file: ./src/registry.ts

@@ -3,7 +3,7 @@
 #########################
 
 type MetaPtr @entity {
-  id: ID! # id = "metaPtr-{project.id.toHex()}"
+  id: ID! # id = "[project|program]-{project.id.toHex()}"
   protocol: BigInt
   pointer: String
 }
@@ -15,7 +15,8 @@ type MetaPtr @entity {
 type Project @entity {
   id: ID!
   accounts: [AccountProject!]! @derivedFrom(field: "project")
-  metaPtr: MetaPtr
+  projectMetadata: MetaPtr
+  programMetadata: MetaPtr
 }
 
 type Account @entity {

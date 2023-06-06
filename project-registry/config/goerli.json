@@ -1,5 +1,5 @@
 {
   "network": "goerli",
-  "startBlock": 7468947,
-  "projectRegistryAddress": "0x832c5391dc7931312CbdBc1046669c9c3A4A28d5"
+  "startBlock": 9127688,
+  "registryAddress": "0x9Cd9211c719693610F2cF715F03a4cc3EAe96132"
 }
