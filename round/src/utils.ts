@@ -1,10 +1,11 @@
 // TODO: wait until ipfs.cat is supported in studio
-import { crypto, 
-  // ipfs, 
-  // json, 
+import { BigInt, crypto,
+  ethereum,
+  // ipfs,
+  // json,
   JSONValue } from '@graphprotocol/graph-ts'
 import { ByteArray } from '@graphprotocol/graph-ts';
-import { MetaPtr } from '../generated/schema';
+import { MetaPtr, RoundApplication, StatusSnapshot } from '../generated/schema';
 
 /**
  * Returns keccak256 of array after elements are joined by '-'
@@ -24,7 +25,7 @@ export function generateID(array: Array<string>): string {
  * @param pointer string
  * @returns MetaPtr
  */
-export function updateMetaPtr(metaPtrId: string, protocol: i32, pointer: string): MetaPtr {
+export function updateMetaPtr(metaPtrId: string, protocol: BigInt, pointer: string): MetaPtr {
   // metaPtr
   let metaPtr = MetaPtr.load(metaPtrId)
   metaPtr = metaPtr == null ? new MetaPtr(metaPtrId) : metaPtr;
@@ -37,6 +38,22 @@ export function updateMetaPtr(metaPtrId: string, protocol: i32, pointer: string)
   metaPtr.save();
 
   return metaPtr;
+}
+
+/**
+ * Creates a StatusSnapshot
+ * @param metaPtrId string
+ * @param protocol i32
+ * @param pointer string
+ * @returns MetaPtr
+ */
+export function createStatusSnapshot(roundApplication: RoundApplication, status: i32, event: ethereum.Event): StatusSnapshot {
+  let statusSnapshot = new StatusSnapshot([roundApplication.id.toString(), status.toString()].join('-'));
+  statusSnapshot.application = roundApplication.id;
+  statusSnapshot.status = status;
+  statusSnapshot.timestamp = event.block.timestamp;
+
+  return statusSnapshot;
 }
 
 /**

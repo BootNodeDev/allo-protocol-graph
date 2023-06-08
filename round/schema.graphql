@@ -1,14 +1,40 @@
 
 ########################
 # == Helper Entities == #
-########################
+#########################
 
 type MetaPtr @entity {
-  id: ID!
-  protocol: Int,
+  id: ID! # id = "[project|program]-{project.id.toHex()}"
+  protocol: BigInt
   pointer: String
 }
 
+#######################
+# ===== Project ===== #
+#######################
+
+type Project @entity {
+  id: ID!
+  accounts: [AccountProject!]! @derivedFrom(field: "project")
+  projectMetadata: MetaPtr
+  programMetadata: MetaPtr
+  rounds: [Round!]! @derivedFrom(field: "program") # rounds created by this
+  applications: [RoundApplication!] @derivedFrom(field: "project") # rounds applied by this
+  createdAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type Account @entity {
+  id: ID!
+  address: String!
+  projects: [AccountProject!]! @derivedFrom(field: "account")
+}
+
+type AccountProject @entity {
+  id: ID! # keccak256(project.id, account.address)
+  account: Account!
+  project: Project!
+}
 
 #######################
 # == Allo Settings == #
@@ -21,58 +47,22 @@ type AlloSettings @entity {
 }
 
 ########################
-# ===== Program ===== #
-########################
-
-# id = programAddress.toHex()
-type Program @entity {
-  id: ID!
-  roles: [ProgramRole!]! @derivedFrom(field: "program")
-  accounts: [ProgramAccount!]! @derivedFrom(field: "program")
-  rounds: [Round!]! @derivedFrom(field: "program")
-  metaPtr: MetaPtr! # id = "metaPtr-{programAddress.toHex()}"
-  createdAt: BigInt!
-  updatedAt: BigInt!
-}
-
-# id = program.toHex()-role.toHex()
-type ProgramRole @entity {
-  id: ID!
-  role: String!
-  accounts: [ProgramAccount!] @derivedFrom(field: "role")
-  program: Program!
-}
-
-# id = keccak256(Program.id, Role.role, _account.address)
-type ProgramAccount @entity {
-  id: ID!
-  address: String!
-  role: ProgramRole!
-  program: Program!
-}
-
-
-########################
 # ===== Round ===== #
 ########################
 
 # id = roundAddress.toHex()
 type Round @entity {
   id: ID!
-  program: Program!
-  roles: [RoundRole!]! @derivedFrom(field: "round")
-  accounts: [RoundAccount!]! @derivedFrom(field: "round")
-  projects: [RoundApplication!] @derivedFrom(field: "round")
-  votingStrategy: String!
-  payoutStrategy: PayoutStrategy!
+  program: Project!
+  roles: [RoundRole!]! @derivedFrom(field: "round") # TODO - admin or operator
+  accounts: [RoundAccount!]! @derivedFrom(field: "round") # TODO - admin or operator
+  projects: [RoundApplication!] @derivedFrom(field: "round") # TODO - applications
+  votingStrategy: String! # TODO - this will be allocation strategy
+  payoutStrategy: PayoutStrategy # TODO - remove deprecated
   applicationsStartTime: String!
   applicationsEndTime: String!
   roundStartTime: String!
   roundEndTime: String!
-  token: String!
-  matchAmount: BigInt!
-  roundFeePercentage: BigInt!
-  roundFeeAddress: String!
   roundMetaPtr: MetaPtr! # id = "roundMetaPtr-{roundAddress.toHex()}"
   applicationMetaPtr: MetaPtr! # id = "applicationMetaPtr-{roundAddress.toHex()}"
   projectsMetaPtr: MetaPtr # id = "projectsMetaPtr-{roundAddress.toHex()}"
@@ -100,7 +90,7 @@ type RoundAccount @entity {
 # id: round.toHex()-applicationIndex.toString()
 type RoundApplication @entity {
   id: ID!
-  project: String!
+  project: Project!
   applicationIndex: Int!
   status: Int!
   metaPtr: MetaPtr!
@@ -109,6 +99,15 @@ type RoundApplication @entity {
   sender: String!
   createdAt: BigInt!
   updatedAt: BigInt!
+  statusSnapshots: [StatusSnapshot!] @derivedFrom(field: "application")
+}
+
+# id: round.toHex()-applicationIndex.toString()-status
+type StatusSnapshot @entity {
+  id:ID!
+  application: RoundApplication!
+  status: Int!
+  timestamp: BigInt!
 }
 
 ######################
@@ -120,11 +119,16 @@ type PayoutStrategy @entity {
   id: ID!
   strategyName: String!
   strategyAddress: String!
+  strategyImplementationAddress: String!
   round: Round @derivedFrom(field: "payoutStrategy")
   payouts: [Payout!] @derivedFrom(field: "payoutStrategy")
   isReadyForPayout: Boolean!
   distributionMetaPtr: MetaPtr # id = "distributionMetaPtr-{payoutContractAddress.toHex()}"
   version: String!
+  token: String!
+  matchAmount: BigInt!
+  roundFeePercentage: BigInt # TODO - remove deprecated
+  roundFeeAddress: String # TODO - remove deprecated
   createdAt: BigInt!
   updatedAt: BigInt!
 }

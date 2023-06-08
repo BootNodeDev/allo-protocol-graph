@@ -1,5 +1,10 @@
 [
   {
+    "inputs": [],
+    "name": "ProgramMetadataIsEmpty",
+    "type": "error"
+  },
+  {
     "anonymous": false,
     "inputs": [
       {
@@ -16,22 +21,10 @@
     "anonymous": false,
     "inputs": [
       {
-        "components": [
-          {
-            "internalType": "uint256",
-            "name": "protocol",
-            "type": "uint256"
-          },
-          {
-            "internalType": "string",
-            "name": "pointer",
-            "type": "string"
-          }
-        ],
-        "indexed": false,
-        "internalType": "struct MetaPtr",
-        "name": "oldMetaPtr",
-        "type": "tuple"
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "projectID",
+        "type": "bytes32"
       },
       {
         "components": [
@@ -48,11 +41,36 @@
         ],
         "indexed": false,
         "internalType": "struct MetaPtr",
-        "name": "newMetaPtr",
+        "name": "metadata",
         "type": "tuple"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum Registry.MetadataType",
+        "name": "metadataType",
+        "type": "uint8"
       }
     ],
-    "name": "MetaPtrUpdated",
+    "name": "MetadataUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "bytes32",
+        "name": "projectID",
+        "type": "bytes32"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "ProjectCreated",
     "type": "event"
   },
   {
@@ -144,16 +162,113 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "PROGRAM_OPERATOR_ROLE",
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "projectID",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "addOwner",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address[]",
+        "name": "projectOwners",
+        "type": "address[]"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "protocol",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "pointer",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct MetaPtr",
+        "name": "projectMetadata",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "protocol",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "pointer",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct MetaPtr",
+        "name": "programMetadata",
+        "type": "tuple"
+      }
+    ],
+    "name": "createProject",
     "outputs": [
       {
         "internalType": "bytes32",
-        "name": "",
+        "name": "projectID",
         "type": "bytes32"
       }
     ],
-    "stateMutability": "view",
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "contract IRoundFactory",
+        "name": "roundFactory",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "projectID",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "strategyImplementation",
+        "type": "address"
+      },
+      {
+        "internalType": "bytes",
+        "name": "encodedRoundParameters",
+        "type": "bytes"
+      },
+      {
+        "internalType": "bytes",
+        "name": "encodedStrategyParameters",
+        "type": "bytes"
+      }
+    ],
+    "name": "createRound",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -261,34 +376,94 @@
     "type": "function"
   },
   {
-    "inputs": [
-      {
-        "internalType": "bytes",
-        "name": "encodedParameters",
-        "type": "bytes"
-      }
-    ],
+    "inputs": [],
     "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "metaPtr",
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "projects",
     "outputs": [
       {
-        "internalType": "uint256",
-        "name": "protocol",
-        "type": "uint256"
+        "internalType": "bytes32",
+        "name": "projectID",
+        "type": "bytes32"
       },
       {
-        "internalType": "string",
-        "name": "pointer",
-        "type": "string"
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "protocol",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "pointer",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct MetaPtr",
+        "name": "projectMetadata",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "protocol",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "pointer",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct MetaPtr",
+        "name": "programMetadata",
+        "type": "tuple"
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "projectsCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "projectID",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "removeOwner",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -349,6 +524,11 @@
   {
     "inputs": [
       {
+        "internalType": "bytes32",
+        "name": "projectID",
+        "type": "bytes32"
+      },
+      {
         "components": [
           {
             "internalType": "uint256",
@@ -362,11 +542,41 @@
           }
         ],
         "internalType": "struct MetaPtr",
-        "name": "newMetaPtr",
+        "name": "programMetadata",
         "type": "tuple"
       }
     ],
-    "name": "updateMetaPtr",
+    "name": "updateProgramMetadata",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "projectID",
+        "type": "bytes32"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "protocol",
+            "type": "uint256"
+          },
+          {
+            "internalType": "string",
+            "name": "pointer",
+            "type": "string"
+          }
+        ],
+        "internalType": "struct MetaPtr",
+        "name": "projectMetadata",
+        "type": "tuple"
+      }
+    ],
+    "name": "updateProjectMetadata",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

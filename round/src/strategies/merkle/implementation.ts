@@ -1,9 +1,9 @@
-import { log } from "@graphprotocol/graph-ts";
+import { log, ethereum } from "@graphprotocol/graph-ts";
 import {
   FundsDistributed as FundsDistributedEvent,
   DistributionUpdated as DistributionUpdatedEvent,
   ReadyForPayout as ReadyForPayoutEvent
-} from "../../../generated/MerklePayoutStrategyFactory/MerklePayoutStrategyImplementation";
+} from "../../../generated/templates/MerklePayoutStrategyImplementation/MerklePayoutStrategyImplementation";
 import { PayoutStrategy, Payout, MetaPtr } from "../../../generated/schema";
 import { generateID, updateMetaPtr } from "../../utils";
 
@@ -32,8 +32,8 @@ export function handleDistributionUpdated(event: DistributionUpdatedEvent): void
   const metaPtrId = ["distributionMetaPtr", payoutStrategy.id].join("-");
 
   const _metaPtr = event.params.distributionMetaPtr;
-  const protocol = _metaPtr[0].toI32();
-  const pointer = _metaPtr[1].toString();
+  const protocol = _metaPtr.protocol;
+  const pointer = _metaPtr.pointer;
 
   const distributionMetaPtr = updateMetaPtr(metaPtrId, protocol, pointer);
 

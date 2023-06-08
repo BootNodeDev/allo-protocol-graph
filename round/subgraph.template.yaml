@@ -2,38 +2,42 @@ specVersion: 0.0.4
 schema:
   file: ./schema.graphql
 dataSources:
-  # ProgramFactory
+  # Registry
   - kind: ethereum/contract
-    name: Program
+    name: Registry
     network: {{ network }}
     source:
-      address: '{{ programFactoryAddress }}'
-      abi: ProgramFactory
-      startBlock: {{ startBlock }}
+      address: "{{ registry.address }}"
+      abi: Registry
+      startBlock: {{ registry.startBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - Program
+        - Project
+        - Account
+        - AccountProject
       abis:
-        - name: ProgramFactory
-          file: ./abis/ProgramFactory.json
-        - name: ProgramImplementation
-          file: ./abis/ProgramImplementation.json
+        - name: Registry
+          file: ./abis/Registry.json
       eventHandlers:
-        - event: ProgramCreated(indexed address,indexed address)
-          handler: handleProgramCreated
-      file: ./src/program/factory.ts
+        - event: MetadataUpdated(indexed bytes32,(uint256,string),uint8)
+          handler: handleMetadataUpdated
+        - event: RoleGranted(indexed bytes32,indexed address,indexed address)
+          handler: handleOwnerAdded
+        - event: RoleRevoked(indexed bytes32,indexed address,indexed address)
+          handler: handleOwnerRemoved
+      file: ./src/registry/index.ts
 
   # RoundFactory
   - kind: ethereum/contract
     name: Round
     network: {{ network }}
     source:
-      address: '{{ roundFactoryAddress }}'
+      address: '{{ roundFactory.address }}'
       abi: RoundFactory
-      startBlock: {{ startBlock }}
+      startBlock: {{ roundFactory.startBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -46,42 +50,20 @@ dataSources:
         - name: RoundImplementation
           file: ./abis/RoundImplementation.json
       eventHandlers:
-        - event: RoundCreated(indexed address,indexed address,indexed address)
+        - event: RoundCreated(indexed bytes32,indexed address,indexed address,address)
           handler: handleRoundCreated
+        - event: StrategyContractCreated(indexed address,indexed address,indexed address)
+          handler: handleStrategyCreated
       file: ./src/round/factory.ts
-
-  # MerklePayoutStrategyFactory
-  - kind: ethereum/contract
-    name: MerklePayoutStrategyFactory
-    network: {{ network }}
-    source:
-      address: '{{ merklePayoutStrategyFactoryAddress }}'
-      abi: MerklePayoutStrategyFactory
-      startBlock: {{ startBlock }}
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - PayoutStrategy
-      abis:
-        - name: MerklePayoutStrategyFactory
-          file: ./abis/MerklePayoutStrategyFactory.json
-        - name: MerklePayoutStrategyImplementation
-          file: ./abis/MerklePayoutStrategyImplementation.json
-      eventHandlers:
-        - event: PayoutContractCreated(indexed address,indexed address)
-          handler: handlePayoutContractCreated
-      file: ./src/payoutStrategy/merkle/factory.ts
 
   # AlloSettings
   - kind: ethereum/contract
     name: AlloSettings
     network: {{ network }}
     source:
-      address: '{{ alloSettingsAddress }}'
+      address: '{{ alloSettings.address }}'
       abi: AlloSettings
-      startBlock: {{ startBlock }}
+      startBlock: {{ alloSettings.startBlock }}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -99,27 +81,6 @@ dataSources:
       file: ./src/settings/alloSettings.ts
 
 templates:
-  # ProgramImplementation AccessControl
-  - kind: ethereum/contract
-    name: ProgramImplementation
-    network: {{ network }}
-    source:
-      abi: ProgramImplementation
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - ProgramRole
-      abis:
-        - name: ProgramImplementation
-          file: ./abis/ProgramImplementation.json
-      eventHandlers:
-        - event: RoleGranted(indexed bytes32,indexed address,indexed address)
-          handler: handleRoleGranted
-        - event: RoleRevoked(indexed bytes32,indexed address,indexed address)
-          handler: handleRoleRevoked
-      file: ./src/program/implementation.ts
 
   # RoundImplementation AccessControl
   - kind: ethereum/contract
@@ -136,6 +97,8 @@ templates:
       abis:
         - name: RoundImplementation
           file: ./abis/RoundImplementation.json
+        - name: MerklePayoutStrategyImplementation
+          file: ./abis/MerklePayoutStrategyImplementation.json
       eventHandlers:
         - event: RoleGranted(indexed bytes32,indexed address,indexed address)
           handler: handleRoleGranted
@@ -145,23 +108,17 @@ templates:
           handler: handleNewProjectApplication
         - event: ApplicationStatusesUpdated(indexed uint256,indexed uint256)
           handler: handleApplicationStatusesUpdated
-        - event: MatchAmountUpdated(uint256)
-          handler: handleMatchAmountUpdated
-        - event: RoundFeePercentageUpdated(uint32)
-          handler: handleRoundFeePercentageUpdated
-        - event: RoundFeeAddressUpdated(address)
-          handler: handleRoundFeeAddressUpdated
-        - event: RoundMetaPtrUpdated((uint256,string),(uint256,string))
+        - event: RoundMetaPtrUpdated((uint256,string))
           handler: handleRoundMetaPtrUpdated
-        - event: ApplicationMetaPtrUpdated((uint256,string),(uint256,string))
+        - event: ApplicationMetaPtrUpdated((uint256,string))
           handler: handleApplicationMetaPtrUpdated
-        - event: ApplicationsStartTimeUpdated(uint256,uint256)
+        - event: ApplicationsStartTimeUpdated(uint256)
           handler: handleApplicationsStartTimeUpdated
-        - event: ApplicationsEndTimeUpdated(uint256,uint256)
+        - event: ApplicationsEndTimeUpdated(uint256)
           handler: handleApplicationsEndTimeUpdated
-        - event: RoundStartTimeUpdated(uint256,uint256)
+        - event: RoundStartTimeUpdated(uint256)
           handler: handleRoundStartTimeUpdated
-        - event: RoundEndTimeUpdated(uint256,uint256)
+        - event: RoundEndTimeUpdated(uint256)
           handler: handleRoundEndTimeUpdated
       file: ./src/round/implementation.ts
 
@@ -190,5 +147,4 @@ templates:
         - event: FundsDistributed(uint256,address,indexed address,indexed bytes32)
           handler: handleFundsDistributed
           receipt: true
-
-      file: ./src/payoutStrategy/merkle/implementation.ts
+      file: ./src/strategies/merkle/implementation.ts

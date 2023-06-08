@@ -119,30 +119,53 @@
     "type": "event"
   },
   {
-    "inputs": [],
-    "name": "LOCK_DURATION",
-    "outputs": [
+    "anonymous": false,
+    "inputs": [
       {
+        "indexed": false,
+        "internalType": "address",
+        "name": "token",
+        "type": "address"
+      },
+      {
+        "indexed": false,
         "internalType": "uint256",
-        "name": "",
+        "name": "amount",
         "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "ROUND_OPERATOR_ROLE",
-    "outputs": [
+      },
       {
+        "indexed": true,
+        "internalType": "address",
+        "name": "voter",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "grantAddress",
+        "type": "address"
+      },
+      {
+        "indexed": true,
         "internalType": "bytes32",
-        "name": "",
+        "name": "projectId",
         "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "applicationIndex",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "roundAddress",
+        "type": "address"
       }
     ],
-    "stateMutability": "view",
-    "type": "function"
+    "name": "Voted",
+    "type": "event"
   },
   {
     "inputs": [],
@@ -195,17 +218,29 @@
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "init",
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "_encodedParams",
+        "type": "bytes"
+      }
+    ],
+    "name": "initialize",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
   {
     "inputs": [],
-    "name": "initialize",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "name": "isDistributionSet",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -223,6 +258,19 @@
   },
   {
     "inputs": [],
+    "name": "matchAmount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "merkleRoot",
     "outputs": [
       {
@@ -232,19 +280,6 @@
       }
     ],
     "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes[]",
-        "name": "_distributions",
-        "type": "bytes[]"
-      }
-    ],
-    "name": "payout",
-    "outputs": [],
-    "stateMutability": "payable",
     "type": "function"
   },
   {
@@ -277,7 +312,7 @@
             "type": "bytes32"
           }
         ],
-        "internalType": "struct MerklePayoutStrategyImplementation.Distribution[]",
+        "internalType": "struct MerklePayoutStrategy.Distribution[]",
         "name": "_distributions",
         "type": "tuple[]"
       }
@@ -331,6 +366,37 @@
     "name": "updateDistribution",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "version",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "pure",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes[]",
+        "name": "encodedVotes",
+        "type": "bytes[]"
+      },
+      {
+        "internalType": "address",
+        "name": "voterAddress",
+        "type": "address"
+      }
+    ],
+    "name": "vote",
+    "outputs": [],
+    "stateMutability": "payable",
     "type": "function"
   },
   {

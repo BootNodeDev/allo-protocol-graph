@@ -3,9 +3,6 @@ import {
   ApplicationStatusesUpdated as ApplicationStatusesUpdatedEvent,
   RoleGranted as RoleGrantedEvent,
   RoleRevoked as RoleRevokedEvent,
-  MatchAmountUpdated,
-  RoundFeePercentageUpdated,
-  RoundFeeAddressUpdated,
   RoundMetaPtrUpdated,
   ApplicationMetaPtrUpdated,
   ApplicationsStartTimeUpdated,
@@ -15,14 +12,14 @@ import {
 } from "../../generated/templates/RoundImplementation/RoundImplementation";
 
 import {
-  MetaPtr,
   Round,
   RoundAccount,
   RoundRole,
   RoundApplication,
+  Project,
 } from "../../generated/schema";
-import { generateID, updateMetaPtr } from "../utils";
-import { JSONValueKind, log, store, BigInt, Bytes, bigInt} from "@graphprotocol/graph-ts";
+import { createStatusSnapshot, generateID, updateMetaPtr } from "../utils";
+import { store, BigInt } from "@graphprotocol/graph-ts";
 
 
 /**
@@ -113,26 +110,26 @@ export function handleNewProjectApplication(
 
   const roundApplicationId = [_round, _appIndex.toString()].join("-");
 
-  // use roundApplicationId as metadataId
-  const metaPtrId = roundApplicationId;
-
   // load Round entity
   let round = Round.load(_round);
   round = round == null ? new Round(_round) : round;
 
   // create new MetaPtr entity
-  let metaPtr = MetaPtr.load(metaPtrId);
-  metaPtr = metaPtr == null ? new MetaPtr(metaPtrId) : metaPtr;
-  metaPtr.protocol = _metaPtr[0].toI32();
-  metaPtr.pointer = _metaPtr[1].toString();
-  metaPtr.save();
+  const metaPtrId = ['roundApplicationMetaPtr', roundApplicationId].join('-');
+  let metaPtr = updateMetaPtr(
+    metaPtrId,
+    _metaPtr.protocol,
+    _metaPtr.pointer
+  );
 
   // create new RoundApplication entity
   let roundApplication = RoundApplication.load(roundApplicationId);
   roundApplication = roundApplication == null ? new RoundApplication(roundApplicationId) : roundApplication;
 
+  let project = Project.load(event.params.projectID.toHexString());
+
   //  RoundApplication
-  roundApplication.project = _project.toString();
+  roundApplication.project = project!.id;
   roundApplication.round = round.id;
   roundApplication.applicationIndex = _appIndex;
   roundApplication.metaPtr = metaPtr.id;
@@ -144,6 +141,8 @@ export function handleNewProjectApplication(
   roundApplication.updatedAt = event.block.timestamp;
 
   roundApplication.save();
+
+  createStatusSnapshot(roundApplication, 0, event);
 }
 
 /**
@@ -158,7 +157,6 @@ export function handleNewProjectApplication(
  *  2 => REJECTED
  *  3 => CANCELLED
  */
-
 export function handleApplicationStatusesUpdated(
   event: ApplicationStatusesUpdatedEvent
 ): void {
@@ -188,6 +186,8 @@ export function handleApplicationStatusesUpdated(
       // update status
       roundApplication.status = status
       roundApplication.save();
+
+      createStatusSnapshot(roundApplication, status, event);
     }
 
   }
@@ -199,79 +199,77 @@ export function handleApplicationStatusesUpdated(
  * Handles indexing on MatchAmountUpdated event.
  * @param event MatchAmountUpdated
  */
+// export function handleMatchAmountUpdated(
+//   event: MatchAmountUpdated
+// ): void {
 
-export function handleMatchAmountUpdated(
-  event: MatchAmountUpdated
-): void {
+//   const newMatchAmount = event.params.newAmount;
+//   const _round = event.address.toHex();
 
-  const newMatchAmount = event.params.newAmount;
-  const _round = event.address.toHex();
+//   // load Round entity
+//   let round = Round.load(_round);
+//   round = round == null ? new Round(_round) : round;
 
-  // load Round entity
-  let round = Round.load(_round);
-  round = round == null ? new Round(_round) : round;
+//   // update matchAmount
+//   round.matchAmount = newMatchAmount;
 
-  // update matchAmount
-  round.matchAmount = newMatchAmount;
+//   // update timestamp
+//   round.updatedAt = event.block.timestamp;
 
-  // update timestamp
-  round.updatedAt = event.block.timestamp;
+//   round.save();
 
-  round.save();
-
-}
+// }
 
 /**
  * Handles indexing on RoundFeePercentageUpdated event.
  * @param event RoundFeePercentageUpdated
  */
+// export function handleRoundFeePercentageUpdated(
+//   event: RoundFeePercentageUpdated
+// ): void {
 
-export function handleRoundFeePercentageUpdated(
-  event: RoundFeePercentageUpdated
-): void {
+//   const newFeePercentage = event.params.roundFeePercentage;
+//   const _round = event.address.toHex();
 
-  const newFeePercentage = event.params.roundFeePercentage;
-  const _round = event.address.toHex();
+//   // load Round entity
+//   let round = Round.load(_round);
+//   round = round == null ? new Round(_round) : round;
 
-  // load Round entity
-  let round = Round.load(_round);
-  round = round == null ? new Round(_round) : round;
+//   // update roundFeePercentage
+//   round.roundFeePercentage = newFeePercentage;
 
-  // update roundFeePercentage
-  round.roundFeePercentage = newFeePercentage;
+//   // update timestamp
+//   round.updatedAt = event.block.timestamp;
 
-  // update timestamp
-  round.updatedAt = event.block.timestamp;
+//   round.save();
 
-  round.save();
-
-}
+// }
 
 /**
  * Handles indexing on RoundFeeAddressUpdated event.
  * @param event RoundFeeAddressUpdated
  */
 
-export function handleRoundFeeAddressUpdated(
-  event: RoundFeeAddressUpdated
-): void {
+// export function handleRoundFeeAddressUpdated(
+//   event: RoundFeeAddressUpdated
+// ): void {
 
-  const newFeeAddress = event.params.roundFeeAddress.toHex();
-  const _round = event.address.toHex();
+//   const newFeeAddress = event.params.roundFeeAddress.toHex();
+//   const _round = event.address.toHex();
 
-  // load Round entity
-  let round = Round.load(_round);
-  round = round == null ? new Round(_round) : round;
+//   // load Round entity
+//   let round = Round.load(_round);
+//   round = round == null ? new Round(_round) : round;
 
-  // update roundFeeAddress
-  round.roundFeeAddress = newFeeAddress;
+//   // update roundFeeAddress
+//   round.roundFeeAddress = newFeeAddress;
 
-  // update timestamp
-  round.updatedAt = event.block.timestamp;
+//   // update timestamp
+//   round.updatedAt = event.block.timestamp;
 
-  round.save();
+//   round.save();
 
-}
+// }
 
 /**
  * Handles indexing on RoundMetaPtrUpdated event.
@@ -289,8 +287,8 @@ export function handleRoundMetaPtrUpdated(
   // update round MetaPtr entity
   let metaPtr = updateMetaPtr(
     roundMetaPtrId,
-    newRoundMetaPtr.protocol.toI32(),
-    newRoundMetaPtr.pointer.toString()
+    newRoundMetaPtr.protocol,
+    newRoundMetaPtr.pointer
   );
 
   // load Round entity
@@ -323,8 +321,8 @@ export function handleApplicationMetaPtrUpdated(
   // update MetaPtr entity
   let metaPtr = updateMetaPtr(
     applicationMetaPtrId,
-    newApplicationMetaPtr.protocol.toI32(),
-    newApplicationMetaPtr.pointer.toString()
+    newApplicationMetaPtr.protocol,
+    newApplicationMetaPtr.pointer
   );
 
   // load Round entity
