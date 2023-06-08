@@ -1,18 +1,21 @@
 import {
   RoundCreated as RoundCreatedEvent,
   StrategyContractCreated as StrategyCreatedEvent,
-} from "../../generated/Round/RoundFactory"
+} from "../../generated/RoundFactory/RoundFactory"
 
-import { PayoutStrategy, Project, Round } from "../../generated/schema";
-import { RoundImplementation, MerklePayoutStrategyImplementation } from  "../../generated/templates";
+import { MerklePayout, Project, Round, DirectPayout } from "../../generated/schema";
+import { RoundImplementation, MerklePayoutStrategy, DirectStrategy } from  "../../generated/templates";
 import {
   RoundImplementation as RoundImplementationContract
-} from "../../generated/templates/RoundImplementation/RoundImplementation";
+} from "../../generated/RoundFactory/RoundImplementation";
 import {
-  MerklePayoutStrategyImplementation as MerklePayoutStrategy
-} from "../../generated/templates/RoundImplementation/MerklePayoutStrategyImplementation";
+  MerklePayoutStrategy as MerklePayoutStrategyContract
+} from "../../generated/RoundFactory/MerklePayoutStrategy";
+import {
+  DirectStrategy as DirectStrategyContract
+} from "../../generated/RoundFactory/DirectStrategy";
 
-import { updateMetaPtr } from "../utils";
+import { getAlloSettings, updateMetaPtr } from "../utils";
 import { BigInt, log } from "@graphprotocol/graph-ts";
 
 const VERSION = "0.1.0";
@@ -43,6 +46,9 @@ export function handleRoundCreated(event: RoundCreatedEvent): void {
   round.roundStartTime = roundContract.roundStartTime().toString();
   round.roundEndTime = roundContract.roundEndTime().toString();
 
+  let alloSettingsAddress = roundContract.alloSettings()
+  let alloSettings = getAlloSettings(alloSettingsAddress);
+  round.alloSetting = alloSettings.id;
 
   // set roundMetaPtr
   const roundMetaPtrId = ['roundMetaPtr', roundContractAddress.toHex()].join('-');
@@ -82,10 +88,6 @@ export function handleRoundCreated(event: RoundCreatedEvent): void {
   round.updatedAt = event.block.timestamp;
 
   round.version = roundContract.VERSION();
-  // round.matchAmount = roundContract.matchAmount();
-  // round.roundFeePercentage = roundContract.roundFeePercentage();
-  // round.roundFeeAddress = roundContract.roundFeeAddress().toHex();
-
 
   round.save();
 
@@ -97,8 +99,9 @@ export function handleStrategyCreated(event: StrategyCreatedEvent): void {
   const strategyImplementation = event.params.strategyImplementation;
   const roundContractAddress = event.params.roundAddress;
 
-  if (strategyImplementation.toHexString() === '0xd8d9c9090a5651c361fd19c5669ba9aa48a8cfcd') {
-    let payoutStrategy = PayoutStrategy.load(
+  // MerklePayoutStrategy
+  if (strategyImplementation.toHex() == '0xd8d9c9090a5651c361fd19c5669ba9aa48a8cfcd') {
+    let payoutStrategy = MerklePayout.load(
       strategyContractAddress.toHex()
     );
 
@@ -108,7 +111,7 @@ export function handleStrategyCreated(event: StrategyCreatedEvent): void {
     }
 
     // create if payout contract does not exist
-    payoutStrategy = new PayoutStrategy(strategyContractAddress.toHex());
+    payoutStrategy = new MerklePayout(strategyContractAddress.toHex());
 
     // set PayoutStrategy entity fields
     payoutStrategy.strategyName = "MERKLE";
@@ -123,13 +126,13 @@ export function handleStrategyCreated(event: StrategyCreatedEvent): void {
     payoutStrategy.updatedAt = event.block.timestamp;
 
     // load contract
-    const merklePayoutContract = MerklePayoutStrategy.bind(strategyContractAddress);
+    const merklePayoutContract = MerklePayoutStrategyContract.bind(strategyContractAddress);
     payoutStrategy.token = merklePayoutContract.tokenAddress().toHexString();
     payoutStrategy.matchAmount = merklePayoutContract.matchAmount();
 
     payoutStrategy.save();
 
-    MerklePayoutStrategyImplementation.create(strategyContractAddress);
+    MerklePayoutStrategy.create(strategyContractAddress);
 
     let round = Round.load(roundContractAddress.toHexString());
     if (round) {
@@ -138,5 +141,49 @@ export function handleStrategyCreated(event: StrategyCreatedEvent): void {
     }
   }
 
-  // TODO - direct strategy
+  // DirectStrategy
+  if (strategyImplementation.toHex() == '0x631de84a116314ecd6f5a87ff3893fced7e5f33f') {
+    let payoutStrategy = DirectPayout.load(
+      strategyContractAddress.toHex()
+    );
+
+    if (payoutStrategy) {
+      log.warning("--> handlePayoutContractCreated {} : payoutStrategy already exists", [strategyContractAddress.toHex()]);
+      return;
+    }
+
+    // create if payout contract does not exist
+    payoutStrategy = new DirectPayout(strategyContractAddress.toHex());
+
+    // set PayoutStrategy entity fields
+    payoutStrategy.strategyName = "DIRECT";
+    payoutStrategy.strategyAddress = strategyContractAddress.toHex();
+    payoutStrategy.strategyImplementationAddress = strategyImplementation.toHex();
+
+    payoutStrategy.version = VERSION;
+
+    // set timestamp
+    payoutStrategy.createdAt = event.block.timestamp;
+    payoutStrategy.updatedAt = event.block.timestamp;
+
+    // load contract
+    const directStrategyContract = DirectStrategyContract.bind(strategyContractAddress);
+    payoutStrategy.vaultAddress = directStrategyContract.vaultAddress().toHexString();
+    payoutStrategy.roundFeePercentage = directStrategyContract.roundFeePercentage();
+    payoutStrategy.roundFeeAddress = directStrategyContract.roundFeeAddress().toHexString();
+
+    let alloSettingsAddress = directStrategyContract.alloSettings()
+    let alloSettings = getAlloSettings(alloSettingsAddress);
+    payoutStrategy.alloSetting = alloSettings.id;
+
+    payoutStrategy.save();
+
+    DirectStrategy.create(strategyContractAddress);
+
+    let round = Round.load(roundContractAddress.toHexString());
+    if (round) {
+      round.payoutStrategy = payoutStrategy.id;
+      round.save();
+    }
+  }
 }

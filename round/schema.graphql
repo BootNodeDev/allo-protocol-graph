@@ -20,6 +20,7 @@ type Project @entity {
   programMetadata: MetaPtr
   rounds: [Round!]! @derivedFrom(field: "program") # rounds created by this
   applications: [RoundApplication!] @derivedFrom(field: "project") # rounds applied by this
+  payouts: [Payout!] @derivedFrom(field: "project")
   createdAt: BigInt!
   updatedAt: BigInt!
 }
@@ -40,7 +41,7 @@ type AccountProject @entity {
 # == Allo Settings == #
 #######################
 
-type AlloSettings @entity {
+type AlloSetting @entity {
   id: ID!
   protocolFeePercentage: Int
   protocolTreasury: String
@@ -57,8 +58,9 @@ type Round @entity {
   roles: [RoundRole!]! @derivedFrom(field: "round") # TODO - admin or operator
   accounts: [RoundAccount!]! @derivedFrom(field: "round") # TODO - admin or operator
   projects: [RoundApplication!] @derivedFrom(field: "round") # TODO - applications
+  alloSetting: AlloSetting!
   votingStrategy: String! # TODO - this will be allocation strategy
-  payoutStrategy: PayoutStrategy # TODO - remove deprecated
+  payoutStrategy: PayoutStrategy
   applicationsStartTime: String!
   applicationsEndTime: String!
   roundStartTime: String!
@@ -115,22 +117,53 @@ type StatusSnapshot @entity {
 ######################
 
 # id = payoutContractAddress.toHex()
-type PayoutStrategy @entity {
+interface PayoutStrategy {
   id: ID!
   strategyName: String!
   strategyAddress: String!
   strategyImplementationAddress: String!
   round: Round @derivedFrom(field: "payoutStrategy")
   payouts: [Payout!] @derivedFrom(field: "payoutStrategy")
-  isReadyForPayout: Boolean!
-  distributionMetaPtr: MetaPtr # id = "distributionMetaPtr-{payoutContractAddress.toHex()}"
   version: String!
-  token: String!
-  matchAmount: BigInt!
-  roundFeePercentage: BigInt # TODO - remove deprecated
-  roundFeeAddress: String # TODO - remove deprecated
   createdAt: BigInt!
   updatedAt: BigInt!
+}
+
+
+# id = payoutContractAddress.toHex()
+type MerklePayout implements PayoutStrategy @entity {
+  id: ID!
+  strategyName: String!
+  strategyAddress: String!
+  strategyImplementationAddress: String!
+  round: Round @derivedFrom(field: "payoutStrategy")
+  payouts: [Payout!] @derivedFrom(field: "payoutStrategy")
+  version: String!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+
+  isReadyForPayout: Boolean!
+  distributionMetaPtr: MetaPtr # id = "distributionMetaPtr-{payoutContractAddress.toHex()}"
+  token: String!
+  matchAmount: BigInt!
+}
+
+# id = payoutContractAddress.toHex()
+type DirectPayout implements PayoutStrategy @entity {
+  id: ID!
+  strategyName: String!
+  strategyAddress: String!
+  strategyImplementationAddress: String!
+  round: Round @derivedFrom(field: "payoutStrategy")
+  payouts: [Payout!] @derivedFrom(field: "payoutStrategy")
+  version: String!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+
+  vaultAddress: String!
+  alloSetting: AlloSetting!
+  roundFeePercentage: BigInt!
+  roundFeeAddress: String!
 }
 
 # id = keccak256(event.receipt.transactionHash.toHex(), Payout.projectId)
@@ -142,7 +175,7 @@ type Payout @entity {
   amount: BigInt!
   token: String!
   grantee: String!
-  projectId: String!
+  project: Project!
   txnHash: String!
   # round: Round!
 }

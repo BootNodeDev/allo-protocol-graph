@@ -103,7 +103,6 @@ export function handleNewProjectApplication(
   event: NewProjectApplicationEvent
 ): void {
   const _round = event.address.toHex();
-  const _project = event.params.projectID.toHex();
   const _appIndex = event.params.applicationIndex.toI32();
   const _metaPtr = event.params.applicationMetaPtr;
   const _sender = event.transaction.from;

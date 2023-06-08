@@ -1,11 +1,15 @@
 // TODO: wait until ipfs.cat is supported in studio
-import { BigInt, crypto,
+import { Address, BigInt, crypto,
   ethereum,
   // ipfs,
   // json,
   JSONValue } from '@graphprotocol/graph-ts'
 import { ByteArray } from '@graphprotocol/graph-ts';
-import { MetaPtr, RoundApplication, StatusSnapshot } from '../generated/schema';
+import { MetaPtr, RoundApplication, StatusSnapshot, AlloSetting } from '../generated/schema';
+
+import {
+  AlloSettings as AlloSettingsContract
+} from "../generated/RoundFactory/AlloSettings";
 
 /**
  * Returns keccak256 of array after elements are joined by '-'
@@ -54,6 +58,27 @@ export function createStatusSnapshot(roundApplication: RoundApplication, status:
   statusSnapshot.timestamp = event.block.timestamp;
 
   return statusSnapshot;
+}
+
+/**
+ * Creates a AlloSettings
+ * @param alloSettingsId string
+ * @returns AlloSettings
+ */
+export function getAlloSettings(alloSettingsAddress: Address): AlloSetting {
+  let alloSettingId = alloSettingsAddress.toHexString();
+  let alloSetting = AlloSetting.load(alloSettingId);
+  if (alloSetting == null) {
+    alloSetting = new AlloSetting(alloSettingId);
+
+    let contract = AlloSettingsContract.bind(alloSettingsAddress)
+    alloSetting.protocolFeePercentage = contract.protocolFeePercentage();
+    alloSetting.protocolTreasury = contract.protocolTreasury().toHexString();
+
+    alloSetting.save()
+  }
+
+  return alloSetting;
 }
 
 /**

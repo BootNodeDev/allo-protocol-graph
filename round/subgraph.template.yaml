@@ -32,7 +32,7 @@ dataSources:
 
   # RoundFactory
   - kind: ethereum/contract
-    name: Round
+    name: RoundFactory
     network: {{ network }}
     source:
       address: '{{ roundFactory.address }}'
@@ -47,8 +47,14 @@ dataSources:
       abis:
         - name: RoundFactory
           file: ./abis/RoundFactory.json
+        - name: AlloSettings
+          file: ./abis/AlloSettings.json
         - name: RoundImplementation
           file: ./abis/RoundImplementation.json
+        - name: MerklePayoutStrategy
+          file: ./abis/MerklePayoutStrategy.json
+        - name: DirectStrategy
+          file: ./abis/DirectStrategy.json
       eventHandlers:
         - event: RoundCreated(indexed bytes32,indexed address,indexed address,address)
           handler: handleRoundCreated
@@ -97,8 +103,6 @@ templates:
       abis:
         - name: RoundImplementation
           file: ./abis/RoundImplementation.json
-        - name: MerklePayoutStrategyImplementation
-          file: ./abis/MerklePayoutStrategyImplementation.json
       eventHandlers:
         - event: RoleGranted(indexed bytes32,indexed address,indexed address)
           handler: handleRoleGranted
@@ -122,12 +126,12 @@ templates:
           handler: handleRoundEndTimeUpdated
       file: ./src/round/implementation.ts
 
-  # MerklePayoutStrategyImplementation
+  # MerklePayoutStrategy
   - kind: ethereum/contract
-    name: MerklePayoutStrategyImplementation
+    name: MerklePayoutStrategy
     network: {{ network }}
     source:
-      abi: MerklePayoutStrategyImplementation
+      abi: MerklePayoutStrategy
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -135,8 +139,8 @@ templates:
       entities:
         - Payout
       abis:
-        - name: MerklePayoutStrategyImplementation
-          file: ./abis/MerklePayoutStrategyImplementation.json
+        - name: MerklePayoutStrategy
+          file: ./abis/MerklePayoutStrategy.json
       eventHandlers:
         - event: DistributionUpdated(bytes32,(uint256,string))
           handler: handleDistributionUpdated
@@ -147,4 +151,28 @@ templates:
         - event: FundsDistributed(uint256,address,indexed address,indexed bytes32)
           handler: handleFundsDistributed
           receipt: true
-      file: ./src/strategies/merkle/implementation.ts
+      file: ./src/strategies/merklePayout.ts
+
+  # DirectStrategy
+  - kind: ethereum/contract
+    name: DirectStrategy
+    network: {{ network }}
+    source:
+      abi: DirectStrategy
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Payout
+      abis:
+        - name: DirectStrategy
+          file: ./abis/DirectStrategy.json
+      eventHandlers:
+        - event: RoundFeePercentageUpdated(uint32)
+          handler: handleRoundFeePercentageUpdated
+          receipt: true
+        - event: RoundFeeAddressUpdated(address)
+          handler: handleRoundFeeAddressUpdated
+          receipt: true
+      file: ./src/strategies/direct.ts
