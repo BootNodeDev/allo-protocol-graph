@@ -142,7 +142,7 @@ export function handleStrategyCreated(event: StrategyCreatedEvent): void {
   }
 
   // DirectStrategy
-  if (strategyImplementation.toHex() == '0x631de84a116314ecd6f5a87ff3893fced7e5f33f') {
+  if (strategyImplementation.toHex() == '0xb3d300c8ab4edf69a505d0cec1252a97ad60242f') {
     let payoutStrategy = DirectPayout.load(
       strategyContractAddress.toHex()
     );

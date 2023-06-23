@@ -178,4 +178,7 @@ type Payout @entity {
   project: Project!
   txnHash: String!
   # round: Round!
+  vault: String
+  applicationIndex: Int
+  allowanceModule: String
 }
